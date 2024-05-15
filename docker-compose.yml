@@ -1,34 +1,40 @@
-version: '3'
+version: "3"
 
 services:
- #Nginx Service
-    webserver:
-     build:
-      context: .
-      dockerfile: Dockerfile
+  #Nginx Service
+  db:
+    container_name: mysql_80
+    image: mysql/mysql-server:8.0
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=Admin123
+      - MYSQL_ROOT_HOST=172.% # Allow docker contatiners to connect to mysql
+      - MYSQL_DATABASE=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=Admin123
+    command: --max_allowed_packet=4G
+    ports:
+      - 3308:3306
+    healthcheck:
+      test: "exit 0"
+    platform: "linux/amd64"
+    volumes:
+      - ./data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
 
-     container_name: nginx
-     restart: unless-stopped
-     ports:
-       - "3000:80"
-
-    db:
-      container_name: mysql_80
-      image: mysql/mysql-server:8.0
-      restart: unless-stopped
-      environment:
-        - MYSQL_ROOT_PASSWORD=Admin123
-        - MYSQL_ROOT_HOST=172.%    # Allow docker contatiners to connect to mysql
-      command: --max_allowed_packet=4G
-      ports:
-        - 3308:3306
-      healthcheck:
-        test: "exit 0"
-      platform:  "linux/amd64"
-      volumes:
-        - ./data:/var/lib/mysql
-        - /etc/localtime:/etc/localtime:ro
-        - /etc/timezone:/etc/timezone:ro
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma
+    links:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8800:80
 
 volumes:
   data:
